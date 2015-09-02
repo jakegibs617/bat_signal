@@ -2,6 +2,7 @@ require 'sinatra'
 require 'pg'
 require 'dotenv'
 require 'twilio-ruby'
+require 'sinatra/flash'
 
 Dotenv.load
 
@@ -55,4 +56,11 @@ post '/batsignal' do
     body: 'To the BatMobile.'
   )
   redirect "/batsignal"
+end
+
+post "/batsignal/batform" do
+  name = params[:name]
+  phonenumber = params[:phonenumber]
+  db_connection {|conn| conn.exec_params ("INSERT INTO members (name, phonenumber) VALUES ($1, $2)"), [name, phonenumber]}
+redirect "/batsignal/batform"
 end
