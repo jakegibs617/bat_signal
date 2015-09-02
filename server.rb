@@ -1,11 +1,16 @@
-require "puma"
 require 'sinatra'
-require "pg"
-require 'rubygems' # not necessary with ruby 1.9 but included for completeness
+require 'pg'
+require 'dotenv'
 require 'twilio-ruby'
 
+Dotenv.load
+
+Twilio.configure do |config|
+  config.account_sid = ENV['TWILIO_ACCOUNT_SID']
+  config.auth_token = ENV['TWILIO_AUTH_TOKEN']
+end
+
 configure :development do
-  require 'dotenv'
   set :db_config, { dbname: "bat_signal" }
 end
 
@@ -20,6 +25,8 @@ configure :production do
   }
 end
 
+client = Twilio::REST::Client.new
+
 def db_connection
   begin
     connection = PG.connect(settings.db_config)
@@ -29,24 +36,23 @@ def db_connection
   end
 end
 
-
 get "/" do
-  redirect '/batsignal'
+ redirect "/batsignal"
 end
 
 get "/batsignal" do
   erb :index
 end
 
-Twilio.configure do |config|
-  config.account_sid = 'TWILIO_ACCOUNT_SID'
-  config.auth_token = 'TWILIO_AUTH_TOKEN'
+get "/batsignal/batform" do
+  erb :form
 end
-# set up a client to talk to the Twilio REST API
-@client = Twilio::REST::Client.new account_sid, auth_token
 
-@client.account.messages.create({
-    :from => '+15183175026',
-    :to => '+15183399563',
-    :body => 'To The Batmobile!',
-})
+post '/batsignal' do
+  client.messages.create(
+    from: '5183175026',
+    to: '202.999.7303',
+    body: 'To the BatMobile.'
+  )
+  redirect "/batsignal"
+end
